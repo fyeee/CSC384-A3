@@ -24,31 +24,41 @@ def compute_heuristic(board, color): #not implemented, optional
 
 ############ MINIMAX ###############################
 def minimax_min_node(board, color, limit, caching = 0):
-    # next_color = 1 if color == 2 else 1
-    # max_utility = float("-inf")
-    # best_move = None
-    # for move in get_possible_moves(board, color):
-    #     new_board = play_move(board, color, move)
-    #     if get_possible_moves(new_board, next_color) == []:
-    #         utility = compute_utility(new_board, color)
-    #     else:
-    #         utility = minimax_min_node(new_board, next_color, limit, caching)[1]
-    #     if utility >= max_utility:
-    #         best_move = move
-    #         max_utility = utility
-    # return (best_move, max_utility)
+    next_color = 1 if color == 2 else 2
+    min_utility = float("inf")
+    best_move = None
+    all_moves = get_possible_moves(board, color)
+    testing = []
+    for move in all_moves:
+        new_board = play_move(board, color, move[0], move[1])
+        if get_possible_moves(new_board, next_color) == []:
+            utility = compute_utility(new_board, next_color)
+        else:
+            if limit - 1 == 0:
+                utility = compute_utility(new_board, next_color)
+            else:
+                utility = minimax_max_node(new_board, next_color, limit - 1, caching)[1]
+        testing.append((move, utility))
+        if utility < min_utility:
+            best_move = move
+            min_utility = utility
+    return (best_move, min_utility)
 
 def minimax_max_node(board, color, limit, caching = 0): #returns highest possible utility
-    next_color = 1 if color == 2 else 1
+    next_color = 1 if color == 2 else 2
     max_utility = float("-inf")
     best_move = None
-    for move in get_possible_moves(board, color):
-        new_board = play_move(board, color, move)
+    all_moves = get_possible_moves(board, color)
+    for move in all_moves:
+        new_board = play_move(board, color, move[0], move[1])
         if get_possible_moves(new_board, next_color) == []:
             utility = compute_utility(new_board, color)
         else:
-            utility = minimax_min_node(new_board,next_color, limit, caching)[1]
-        if utility >= max_utility:
+            if limit - 1 == 0:
+                utility = compute_utility(new_board, color)
+            else:
+                utility = minimax_min_node(new_board, next_color, limit - 1, caching)[1]
+        if utility > max_utility:
             best_move = move
             max_utility = utility
     return (best_move, max_utility)
@@ -66,11 +76,8 @@ def select_move_minimax(board, color, limit, caching = 0):
     If caching is ON (i.e. 1), use state caching to reduce the number of state evaluations.
     If caching is OFF (i.e. 0), do NOT use state caching to reduce the number of state evaluations.    
     """
-    # next_color = 1 if color == 2 else 1
-    # for move in get_possible_moves(board, color):
-    #     new_board = play_move(board, color, move)
+    return minimax_max_node(board, color, limit, caching)[0]
 
-    return (0,0) #change this!
 
 ############ ALPHA-BETA PRUNING #####################
 def alphabeta_min_node(board, color, alpha, beta, limit, caching = 0, ordering = 0):
