@@ -25,6 +25,10 @@ def compute_heuristic(board, color): #not implemented, optional
     #IMPLEMENT
     return 0 #change this!
 
+def order(elem):
+    return elem[2]
+
+
 ############ MINIMAX ###############################
 def minimax_min_node(board, color, limit, caching = 0):
     opponent = 1 if color == 2 else 2
@@ -52,7 +56,6 @@ def minimax_max_node(board, color, limit, caching = 0): #returns highest possibl
     max_utility = float("-inf")
     best_move = None
     all_moves = get_possible_moves(board, color)
-    new_boards = [play_move(board, color, move[0], move[1]) for move in all_moves]
     for move in all_moves:
         new_board = play_move(board, color, move[0], move[1])
         if caching and new_board in state:
@@ -85,22 +88,27 @@ def select_move_minimax(board, color, limit, caching = 0):
 
 
 ############ ALPHA-BETA PRUNING #####################
-def alphabeta_min_node(board, color, alpha, beta, limit, caching = 0, ordering = 0):
+def alphabeta_min_node(board, color, alpha, beta, limit, caching=0, ordering=0):
     opponent = 1 if color == 2 else 2
     min_utility = float("inf")
     best_move = None
-    all_moves = get_possible_moves(board, opponent)
-    for move in all_moves:
+    move_boards = [(move, play_move(board, opponent, move[0], move[1])) for move in get_possible_moves(board, opponent)]
+    move_board_utility = [(item[0], item[1], compute_utility(item[1], color))
+                          for item in move_boards]
+    if ordering:
+        move_board_utility.sort(key=order, reverse=False)
+    for i in range(len(move_board_utility)):
         if alpha > beta:
             return best_move, min_utility
-        new_board = play_move(board, opponent, move[0], move[1])
+        move = move_board_utility[i][0]
+        new_board = move_board_utility[i][1]
         if caching and new_board in state:
             utility = state[new_board]
         else:
             if get_possible_moves(new_board, color) == [] or limit - 1 == 0:
                 utility = compute_utility(new_board, color)
             else:
-                utility = minimax_max_node(new_board, color, limit - 1, caching)[1]
+                utility = alphabeta_max_node(new_board, color, alpha, beta, limit - 1, caching, ordering)[1]
             state[new_board] = utility
         if utility < beta:
              beta = utility
@@ -113,18 +121,23 @@ def alphabeta_max_node(board, color, alpha, beta, limit, caching = 0, ordering =
     opponent = 1 if color == 2 else 2
     max_utility = float("-inf")
     best_move = None
-    all_moves = get_possible_moves(board, color)
-    for move in all_moves:
-        if alpha >= beta:
+    move_boards = [(move, play_move(board, color, move[0], move[1])) for move in get_possible_moves(board, color)]
+    move_board_utility = [(item[0], item[1], compute_utility(item[1], color))
+                          for item in move_boards]
+    if ordering:
+        move_board_utility.sort(key=order, reverse=True)
+    for i in range(len(move_board_utility)):
+        if alpha > beta:
             return best_move, max_utility
-        new_board = play_move(board, color, move[0], move[1])
+        move = move_board_utility[i][0]
+        new_board = move_board_utility[i][1]
         if caching and new_board in state:
             utility = state[new_board]
         else:
             if get_possible_moves(new_board, opponent) == [] or limit - 1 == 0:
                 utility = compute_utility(new_board, color)
             else:
-                utility = minimax_min_node(new_board, color, limit - 1, caching)[1]
+                utility = alphabeta_min_node(new_board, color, alpha, beta, limit - 1, caching, ordering)[1]
             state[new_board] = utility
         if utility > alpha:
             alpha = utility
@@ -148,7 +161,7 @@ def select_move_alphabeta(board, color, limit, caching = 0, ordering = 0):
     If ordering is ON (i.e. 1), use node ordering to expedite pruning and reduce the number of state evaluations. 
     If ordering is OFF (i.e. 0), do NOT use node ordering to expedite pruning and reduce the number of state evaluations. 
     """
-    return alphabeta_max_node(board, color, float("-inf"), float("inf"), limit, caching)[0]
+    return alphabeta_max_node(board, color, float("-inf"), float("inf"), limit, caching, ordering)[0]
 
 ####################################################
 def run_ai():
